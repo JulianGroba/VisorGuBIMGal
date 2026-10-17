@@ -2,7 +2,7 @@
 
 **Estado:** propuesta técnica inicial (SDD)  
 **Fecha:** 2026-10-17  
-**Objetivo:** visor BIM de código abierto, ejecutado íntegramente en el navegador y desplegable como sitio estático en GitHub Pages.
+**Objetivo:** visor BIM de código abierto, ejecutado íntegramente en el navegador y desplegable como sitio estático en Vercel (con cabeceras HTTP optimizadas para WASM/WebGPU).
 
 ## 1. Visión y principios
 
@@ -31,7 +31,7 @@ Principios:
 | UI | TypeScript + Vite; framework ligero decidido tras el spike | React es la ruta más directa si se adopta la plantilla React de IFClite. Evitar mezclar frameworks. |
 | Estado | Estado de dominio tipado separado del estado visual | Evita que componentes UI sean la fuente de verdad de modelos y coordenadas. |
 | Pruebas | Vitest + Playwright; fixtures IFC pequeños y medianos con licencia clara | Contratos, regresión funcional y pruebas de navegador. |
-| Hosting | GitHub Pages mediante GitHub Actions | Vite requiere configurar `base` según el nombre del repositorio. |
+| Hosting | Vercel (estático / SPA) | Despliegue en raíz (`/`), soporte nativo de cabeceras COOP/COEP en `vercel.json` para WASM y vistas previas automáticas en PRs. |
 
 ### Referencias técnicas principales
 
@@ -46,7 +46,7 @@ Principios:
 - `@tarikjabiri/dxf` (exportador DXF TypeScript): https://github.com/dxfjs/writer
 - CesiumJS: https://cesium.com/platform/cesiumjs/
 - Leaflet: https://leafletjs.com/
-- Despliegue Vite en GitHub Pages: https://vite.dev/guide/static-deploy.html
+- Despliegue en Vercel con Vite: https://vite.dev/guide/static-deploy.html#vercel
 
 ## 3. Alcance funcional
 
@@ -88,7 +88,7 @@ Principios:
 ## 4. Requisitos no funcionales
 
 - **NFR-01 Privacidad:** los ficheros seleccionados no se envían por red. Verificarlo en pruebas de navegador.
-- **NFR-02 Portabilidad:** desplegable como estático en GitHub Pages bajo una ruta de repositorio, no solo en dominio raíz.
+- **NFR-02 Portabilidad y despliegue:** desplegable en Vercel (o hosting estático compatible). Debe permitir configurar cabeceras de aislamiento de origen cruzado (`COOP: same-origin`, `COEP: credentialless` o `require-corp`) para optimizar WASM y multihilo.
 - **NFR-03 Compatibilidad:** detectar WebGPU. Probar al menos un navegador con WebGPU y otro sin ella; documentar el fallback real. No declarar WebGL como fallback hasta implementarlo y probarlo.
 - **NFR-04 Resiliencia:** un IFC inválido o un fallo de carga no debe cerrar la aplicación ni eliminar los modelos ya cargados.
 - **NFR-05 Federación:** los identificadores internos deben ser compuestos por `modelId + expressId`; no asumir que `expressId` es globalmente único.
@@ -325,7 +325,7 @@ Proceso:
 - Probar dos IFC a la vez, incluidos modelos con IDs locales coincidentes.
 - Generar una planta/sección y exportar SVG y DXF.
 - Inspeccionar DXF en un CAD; validar unidades, capas, orientación, codificación y geometría.
-- Confirmar que el build funciona en GitHub Pages bajo `/<repo>/`.
+- Confirmar que el build funciona en Vercel sin problemas de rutas ni cabeceras.
 - Resultado obligatorio: `SPIKE-REPORT.md` con versiones, fixture, navegador/GPU, tiempos, fallos, APIs comprobadas y decisión continuar/cambiar.
 
 **Criterio de salida:** no empezar la arquitectura completa hasta demostrar carga federada y exportación DXF con un IFC de prueba representativo.
@@ -356,7 +356,7 @@ Proceso:
 
 - Persistencia local de sesiones.
 - Accesibilidad, pruebas E2E, rendimiento y diagnóstico.
-- CI con lint, typecheck, pruebas, build y despliegue Pages.
+- CI/CD con lint, typecheck, pruebas, build y despliegue automatizado en Vercel.
 - Documentación de límites conocidos y compatibilidad.
 
 ### Fase 5 — Extensiones
@@ -378,7 +378,7 @@ Proceso:
 - **TC-009:** un IFC con CRS válido se coloca según transformación verificada; un IFC sin CRS no se presenta como georreferenciado.
 - **TC-010:** mostrar un mapa GIS y una capa de servicio configurable cuando el proveedor lo permita.
 - **TC-011:** comprobar en DevTools/red que los IFC locales no se transmiten a terceros.
-- **TC-012:** desplegar en GitHub Pages bajo una ruta de repositorio sin fallos de rutas ni carga de WASM.
+- **TC-012:** desplegar en Vercel con cabeceras COOP/COEP configuradas y sin fallos de rutas o carga de binarios WASM.
 - **TC-013:** detectar ausencia de WebGPU y mostrar un mensaje de compatibilidad sin pantalla en blanco.
 - **TC-014:** cargar y retirar repetidamente modelos sin acumulación evidente de recursos ni errores fatales.
 
@@ -406,4 +406,4 @@ Decisiones que deben resolverse en el spike:
 
 Empezar con **IFClite + TypeScript/Vite + Leaflet + `@ifc-lite/drawing-2d`**, manteniendo CesiumJS como módulo opcional y sin backend. No incorporar de inicio That Open Engine, `web-ifc` ni un segundo exportador DXF en paralelo: son alternativas válidas, pero añadir varios motores antes de validar IFClite aumenta complejidad y duplicación.
 
-La primera entrega técnica debe ser un spike pequeño que demuestre, en este orden: (1) carga y selección de un IFC, (2) dos IFC federados, (3) generación de una sección, (4) DXF comprobado en CAD y (5) despliegue real en GitHub Pages. Solo después se consolidan los contratos y se implementa el MVP.
+La primera entrega técnica debe ser un spike pequeño que demuestre, en este orden: (1) carga y selección de un IFC, (2) dos IFC federados, (3) generación de una sección, (4) DXF comprobado en CAD y (5) despliegue real en Vercel. Solo después se consolidan los contratos y se implementa el MVP.
