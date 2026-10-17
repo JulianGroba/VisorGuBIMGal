@@ -6,6 +6,7 @@ import {
   svgObjectUrl,
   type DrawingResult,
 } from "./drawing";
+import { mountGisPanel, type BaseLayerId } from "./gis";
 import {
   describeError,
   type Diagnostic,
@@ -50,6 +51,9 @@ export function mountUi(viewer: IfcViewer): Ui {
   const drawingLabel = must<HTMLSpanElement>("drawing-label");
   const rendererState = must<HTMLSpanElement>("renderer-state");
   const canvas = must<HTMLCanvasElement>("canvas");
+  const mapContainer = must<HTMLDivElement>("map");
+  const baseLayerSelect = must<HTMLSelectElement>("base-layer");
+  const gisStatus = must<HTMLParagraphElement>("gis-status");
 
   const buttons = {
     fit: must<HTMLButtonElement>("fit"),
@@ -78,6 +82,22 @@ export function mountUi(viewer: IfcViewer): Ui {
   };
 
   attachCameraControls(canvas, viewer.rendererInstance, () => viewer.requestRender(), log);
+
+  // Contexto GIS (MVP §3.1 puntos 9 y 10; TC-009 y TC-010). El mapa se monta
+  // siempre: si no hay ningún modelo georreferenciado, se explica por qué no se
+  // coloca nada en lugar de dejar el panel vacío.
+  const gis = mountGisPanel(mapContainer, log);
+
+  baseLayerSelect.addEventListener("change", () => {
+    gis.setBaseLayer(baseLayerSelect.value as BaseLayerId);
+  });
+  window.addEventListener("resize", () => gis.invalidate());
+
+  // Hook de depuración, sólo en local: permite medir las colocaciones reales
+  // desde la consola (__gis.placements) sin instrumentar la aplicación.
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    (window as unknown as Record<string, unknown>).__gis = gis;
+  }
 
   const enqueueFiles = (files: FileList | null): void => {
     if (!files || files.length === 0) return;
@@ -240,6 +260,29 @@ export function mountUi(viewer: IfcViewer): Ui {
     }
 
     renderGeoreference(models);
+    renderGis(models);
+  };
+
+  const renderGis = (models: readonly ModelRecord[]): void => {
+    gis.update(models);
+    // El contenedor puede haber cambiado de tamaño; Leaflet cachea las
+    // dimensiones hasta que se le avisa explícitamente.
+    gis.invalidate();
+
+    const placed = gis.placements.length;
+    const pending = gis.unplaced.length;
+
+    if (placed === 0) {
+      gisStatus.textContent =
+        pending === 0
+          ? "Sin modelos georreferenciados."
+          : `${pending} modelo(s) sin georreferenciación utilizable: no se colocan en el mapa.`;
+      return;
+    }
+
+    gisStatus.textContent =
+      `${placed} modelo(s) colocados${pending > 0 ? `, ${pending} sin colocar` : ""}.` +
+      " Clic en el marcador para ver CRS y coordenadas.";
   };
 
   const renderGeoreference = (models: readonly ModelRecord[]): void => {

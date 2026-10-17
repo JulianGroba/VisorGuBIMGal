@@ -51,7 +51,24 @@
         <h2>3. Georreferenciación</h2>
         <dl id="georef"></dl>
 
-        <h2>4. Planos y exportación</h2>
+        <h2>4. Mapa GIS (contexto geográfico)</h2>
+        <div class="row">
+          <label for="base-layer">Capa base</label>
+          <select id="base-layer">
+            <option value="pnoa">IGN · ortofoto PNOA (WMS)</option>
+            <option value="osm">OpenStreetMap</option>
+            <option value="ninguna">Sin capa base</option>
+          </select>
+        </div>
+        <p class="note" id="gis-status">Sin modelos georreferenciados.</p>
+        <div
+          id="map"
+          class="map"
+          role="application"
+          aria-label="Mapa de contexto de los modelos georreferenciados"
+        ></div>
+
+        <h2>5. Planos y exportación</h2>
         <div class="row">
           <label for="plan-elevation">Cota planta (m)</label>
           <input id="plan-elevation" type="number" step="0.1" value="1.2" />
@@ -74,10 +91,10 @@
           <img id="drawing-img" alt="" />
         </div>
 
-        <h2>5. Diagnóstico</h2>
+        <h2>6. Diagnóstico</h2>
         <dl id="diag"></dl>
 
-        <h2>6. Registro</h2>
+        <h2>7. Registro</h2>
         <pre id="log"></pre>
       </section>
     </main>

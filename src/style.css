@@ -157,6 +157,39 @@ input[type="number"] {
   font-size: 12px;
 }
 
+select {
+  padding: 4px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+
+/* 4. Mapa GIS. Leaflet necesita altura explícita en el contenedor: sin ella
+   crea un mapa de 0 px que no falla, simplemente no se ve. */
+.map {
+  height: 340px;
+  margin-top: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  z-index: 0;
+}
+
+.map .leaflet-container {
+  background: var(--panel-2);
+  font: inherit;
+}
+
+.map .leaflet-popup-content {
+  margin: 8px 10px;
+  color: #10151c;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 #models {
   list-style: none;
   margin: 12px 0 0;
