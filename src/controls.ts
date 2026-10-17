@@ -9,15 +9,24 @@ import type { LogLevel } from "./viewer";
  * comprobó que `Camera` es API pública y completa (`orbit`, `pan`, `zoom`,
  * `setPresetView`…), así que aquí se usa directamente y el sondeo desaparece.
  *
+ * Unidades de los deltas (leídas de `constants.js` del paquete, no supuestas):
+ *
+ *   ORBIT_SENSITIVITY     0.01   radianes por píxel
+ *   PAN_SPEED_MULTIPLIER  0.001  × distancia de la cámara (por píxel)
+ *   ZOOM_SENSITIVITY      0.001  y MAX_ZOOM_DELTA 0.1
+ *
+ * Es decir, las tres esperan **píxeles de movimiento del ratón**. En el zoom la
+ * consecuencia es literal: `normalizedDelta = signo × min(|delta| × 0.001, 0.1)`,
+ * así que una muesca de rueda de Chrome (`deltaY = 100`) satura el tope del 10 %
+ * y 100 píxeles es exactamente «una muesca al máximo». La primera versión del
+ * spike pasaba `deltaY / 100`: cada muesca hacía un 0,1 %, cien veces menos, y
+ * el zoom parecía roto. Aquí se pasan píxeles.
+ *
  * Convenio de gestos:
+ *   rueda                  → zoom hacia el cursor (Ctrl: precisión, Mayús: dolly puro)
  *   botón izquierdo        → órbita
  *   botón central/derecho  → desplazamiento (pan)
  *   Mayús + izquierdo      → desplazamiento
- *   rueda                  → zoom hacia el cursor
- *
- * Las convenciones de signo y sensibilidad de `orbit`/`pan`/`zoom` no están
- * documentadas con ejemplos numéricos: hay que compararlas con el visor de
- * referencia y ajustarlas (ver SPIKE-REPORT.md).
  */
 
 export interface CameraControls {
@@ -27,6 +36,26 @@ export interface CameraControls {
 
 const ORBIT_BUTTON = 0;
 const PAN_BUTTONS = new Set([1, 2]);
+
+/**
+ * Píxeles equivalentes a una línea de rueda. Firefox entrega `deltaMode = 1`
+ * con valores del orden de 3 (una muesca ≈ 3 líneas); 33 los convierte en los
+ * ~100 px de una muesca de Chrome, que es la referencia del paquete.
+ */
+const PIXELS_PER_LINE = 33;
+
+/** Factor de precisión para Ctrl/Cmd + rueda. */
+const PRECISION_FACTOR = 0.25;
+
+/**
+ * Convierte el desplazamiento de rueda a píxeles, que es lo que espera
+ * `Camera.zoom`. `deltaMode` distingue píxeles (0), líneas (1) y páginas (2).
+ */
+function wheelDeltaToPixels(event: WheelEvent, canvasHeight: number): number {
+  if (event.deltaMode === 1) return event.deltaY * PIXELS_PER_LINE;
+  if (event.deltaMode === 2) return event.deltaY * canvasHeight;
+  return event.deltaY;
+}
 
 export function attachCameraControls(
   canvas: HTMLCanvasElement,
@@ -81,17 +110,27 @@ export function attachCameraControls(
   };
 
   const onWheel = (event: WheelEvent): void => {
+    // Sin `preventDefault` el navegador desplaza la página y hace zoom de página
+    // con Ctrl, que es justo el gesto de precisión que usamos aquí.
     event.preventDefault();
+
+    const precision = event.ctrlKey || event.metaKey;
+    const pixels = wheelDeltaToPixels(event, canvas.clientHeight) * (precision ? PRECISION_FACTOR : 1);
+    if (!Number.isFinite(pixels) || pixels === 0) return;
+
     const rect = canvas.getBoundingClientRect();
-    // `zoom` documenta: delta positivo = alejar. El factor 100 es una primera
-    // aproximación a la sensibilidad por muesca de rueda.
     camera.zoom(
-      event.deltaY / 100,
+      pixels,
+      // Sin inercia: una muesca es un paso discreto y predecible. Los pequeños
+      // deltas de un panel táctil ya llegan a alta frecuencia y salen suaves.
       false,
+      // Ancla en el cursor: el punto bajo el ratón se queda quieto al acercarse.
       event.clientX - rect.left,
       event.clientY - rect.top,
       canvas.clientWidth,
       canvas.clientHeight,
+      // Mayús: dolly puro (acercamiento recto, sin acercarse al cursor).
+      event.shiftKey,
     );
     requestRender();
   };
@@ -108,7 +147,9 @@ export function attachCameraControls(
   canvas.addEventListener("wheel", onWheel, { passive: false });
   canvas.addEventListener("contextmenu", onContextMenu);
 
-  log("Navegación activa: izquierdo órbita · central/derecho o Mayús+izquierdo desplazar · rueda zoom.");
+  log(
+    "Navegación: izquierdo órbita · central/derecho o Mayús+izquierdo desplazar · rueda zoom (Ctrl precisión, Mayús dolly).",
+  );
 
   return {
     enabled: true,

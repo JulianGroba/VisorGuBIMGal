@@ -65,3 +65,11 @@ if (!viewer.isRendererReady) {
     "warn",
   );
 }
+
+// Hook de depuración, sólo en local. Permite medir la cámara desde la consola
+// del navegador y desde las pruebas automatizadas del spike sin instrumentar
+// el código de la aplicación, p. ej.:
+//   __visor.rendererInstance.getCamera().getDistance()
+if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+  (window as unknown as Record<string, unknown>).__visor = viewer;
+}

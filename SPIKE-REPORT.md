@@ -259,6 +259,37 @@ fichero grande y, posiblemente, con datos de un cliente. Propuesta:
 El fixture `spike-fixtures/spike-test.ifc` (3 KB, escrito a mano para este spike)
 sí conviene versionarlo: sirve como fixture de regresión.
 
+### H14 — El zoom de rueda tenía un error de escala de 100× (y el tope nominal es la mitad)
+
+El primer control de rueda pasaba `deltaY / 100` a `Camera.zoom`. La librería
+normaliza con `ZOOM_SENSITIVITY = 0,001` y topa en `MAX_ZOOM_DELTA = 0,1`: espera
+**píxeles**, y con 100 el paso ya está saturado. Cada muesca hacía un **0,1 %** en
+vez del 10 % nominal, así que el zoom parecía roto. Corregido pasando píxeles,
+normalizando `deltaMode` (Firefox entrega líneas, no píxeles), añadiendo precisión
+con Ctrl (×0,25) y dolly puro con Mayús (`fastZoom`).
+
+Medido sobre el renderer real (`Camera.getDistance()`), con el fixture cargado:
+
+| Gesto | Cambio de distancia |
+|---|---|
+| 1 muesca (100 px) | **+5,00 %** |
+| Ctrl + muesca | +1,25 % |
+| Mayús + muesca | 0 % (dolly puro: desplaza posición y objetivo a la vez) |
+| Muesca hacia dentro | −5,00 % |
+| 200 px o 1000 px | +5,00 % (mismo tope) |
+
+El 5 % es **correcto y está documentado en el código** de la librería:
+`zoomPerspective()` aplica medio paso como avance de cámara y medio como reducción
+de distancia («half dolly + half distance reduction - gives zoom-to-cursor»). El
+zoom además ancla el punto bajo el cursor, así que el ratón se queda «pegado» al
+sitio que señala.
+
+**Idea no implementada** (requiere trabajo asíncrono): `Camera.zoom()` acepta un
+último parámetro `surfacePoint` que hace que al acercar la cámara se aproxime a la
+superficie **real** bajo el cursor en vez de al plano del objetivo (#5393). El
+punto se obtiene con `pick().worldXYZ`, pero es una lectura de GPU por evento de
+rueda y hay que limitarla; se deja para la Fase 1.
+
 ## 7. Qué NO se ha probado (huecos honestos)
 
 1. **Un IFC real.** Sólo se ha probado con el fixture propio de 3 KB. El §12 pide
@@ -284,8 +315,13 @@ sí conviene versionarlo: sirve como fixture de regresión.
 
 ## 8. Preguntas abiertas para la revisión
 
-- **P1.** Convenciones numéricas de `camera.orbit/pan/zoom`: signos y sensibilidad
-  no están documentados; hay que calibrarlos contra el visor de referencia.
+- **P1.** Convenciones numéricas de `camera.orbit/pan/zoom`: **resuelto para el
+  zoom** (ver H14). No están en la guía, pero sí en el código publicado
+  (`constants.js`): `ORBIT_SENSITIVITY = 0,01` rad/px,
+  `PAN_SPEED_MULTIPLIER = 0,001 × distancia` y `ZOOM_SENSITIVITY = 0,001` con
+  `MAX_ZOOM_DELTA = 0,1`. Las tres esperan **píxeles de ratón**. Queda por
+  decidir, contra el visor de referencia, si 5 % por muesca es la sensación
+  deseada: el tope lo fija el paquete, no la aplicación.
 - **P2.** ¿`loadGeometry()` reasigna `MeshData.modelIndex` o respeta el que trae
   la malla? El spike asigna `modelIndex` a mano y la federación funciona, pero la
   vía incremental (`addMeshes`) debe confirmarse.
