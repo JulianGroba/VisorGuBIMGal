@@ -20,7 +20,7 @@ Visor BIM y GIS de código abierto ejecutado íntegramente en el navegador (clie
 
 ## Especificación técnica
 
-La arquitectura, casos de uso y criterios de aceptación se detallan en [SPEC_IFCLITE_BIM_GIS_VIEWER.md](./SPEC_IFCLITE_BIM_GIS_VIEWER.md).
+La arquitectura, casos de uso y criterios de aceptación se detallan en [docs/01-especificacion-visor.md](./docs/01-especificacion-visor.md). El resto de la documentación parte del índice [docs/00-indice.md](./docs/00-indice.md).
 
 ## Hoja de ruta
 

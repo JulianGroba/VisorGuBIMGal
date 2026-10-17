@@ -69,14 +69,11 @@ del toolchain no compra nada.
 
 ## 4. Cómo reproducirlo
 
-```bash
-npm install
-npm run build        # tsc --noEmit && vite build
-npm run dev          # http://localhost:5173
-npm run preview      # sirve dist/ con COOP+COEP
-```
+Comandos, requisitos y trampas de compilación: `docs/07-desarrollo-local.md` (no se
+duplican aquí).
 
-Comprobado: `npm run build` pasa limpio (sin errores ni avisos) en 9,8–13,3 s.
+Comprobado en este spike: `npm run build` pasa limpio, sin errores ni avisos, en
+9,8–13,3 s.
 
 ## 5. Resultados medidos
 

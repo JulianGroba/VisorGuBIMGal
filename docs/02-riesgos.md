@@ -1,6 +1,6 @@
 # Análisis de Riesgos Técnicos y Limitaciones Críticas
 
-**Documento complementario a:** [`SPEC_IFCLITE_BIM_GIS_VIEWER.md`](./SPEC_IFCLITE_BIM_GIS_VIEWER.md)  
+**Documento complementario a:** [`docs/01-especificacion-visor.md`](./01-especificacion-visor.md)  
 **Fecha:** 2026-10-17  
 **Estado:** Activo / Evaluación previa al Spike (Fase 0)
 
