@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VisorGuBIMGal · spike Fase 0</title>
+    <meta
+      name="description"
+      content="Spike técnico del visor BIM/GIS del GuBIM Galicia: IFC-Lite, TypeScript y Vite. Todo el procesamiento ocurre en el navegador."
+    />
+  </head>
+  <body>
+    <header>
+      <h1>VisorGuBIMGal · spike Fase&nbsp;0</h1>
+      <p>
+        IFC-Lite + TypeScript + Vite · GuBIM Galicia. Los ficheros se procesan
+        <strong>en local</strong>: no se envían a ningún servidor.
+      </p>
+    </header>
+
+    <main>
+      <section class="panel">
+        <h2>1. Modelos</h2>
+        <div id="drop" tabindex="0" role="button" aria-label="Zona para arrastrar ficheros IFC">
+          <strong>Arrastra aquí tus ficheros .ifc</strong>
+          <span>o</span>
+          <label class="button" for="file-input">Seleccionar ficheros</label>
+          <input id="file-input" type="file" accept=".ifc,.ifczip" multiple hidden />
+        </div>
+        <ul id="models" aria-live="polite"></ul>
+      </section>
+
+      <section class="viewer">
+        <div class="viewer-toolbar">
+          <button id="fit" type="button" disabled>Encuadrar</button>
+          <button id="projection" type="button" disabled>Proyección: perspectiva</button>
+          <button id="view-top" type="button" disabled>Planta</button>
+          <button id="view-front" type="button" disabled>Alzado</button>
+          <button id="view-right" type="button" disabled>Perfil</button>
+          <span class="note" id="renderer-state">Renderer: inicializando…</span>
+        </div>
+        <canvas id="canvas"></canvas>
+      </section>
+
+      <section class="panel">
+        <h2>2. Selección y propiedades</h2>
+        <table class="props">
+          <tbody id="props-body"></tbody>
+        </table>
+
+        <h2>3. Georreferenciación</h2>
+        <dl id="georef"></dl>
+
+        <h2>4. Planos y exportación</h2>
+        <div class="row">
+          <label for="plan-elevation">Cota planta (m)</label>
+          <input id="plan-elevation" type="number" step="0.1" value="1.2" />
+          <button id="plan" type="button" disabled>Generar planta</button>
+        </div>
+        <div class="row">
+          <label for="section-pos">Posición sección (m)</label>
+          <input id="section-pos" type="number" step="0.5" value="5" />
+          <button id="section-x" type="button" disabled>Sección X</button>
+          <button id="section-z" type="button" disabled>Sección Z</button>
+        </div>
+        <div class="row">
+          <span id="drawing-label" class="note">Sin plano generado</span>
+        </div>
+        <div class="row">
+          <button id="export-svg" type="button" disabled>Descargar SVG</button>
+          <button id="export-dxf" type="button" disabled>Descargar DXF</button>
+        </div>
+        <div class="drawing-preview">
+          <img id="drawing-img" alt="" />
+        </div>
+
+        <h2>5. Diagnóstico</h2>
+        <dl id="diag"></dl>
+
+        <h2>6. Registro</h2>
+        <pre id="log"></pre>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

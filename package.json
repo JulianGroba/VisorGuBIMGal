@@ -1,0 +1,26 @@
+{
+  "name": "visorgubimgal",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Spike técnico (Fase 0) del visor BIM/GIS del GuBIM Galicia: IFC-Lite + TypeScript + Vite",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ifc-lite/drawing-2d": "4.2.0",
+    "@ifc-lite/geometry": "7.8.1",
+    "@ifc-lite/parser": "9.5.1",
+    "@ifc-lite/renderer": "6.4.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "vite": "7.3.7"
+  }
+}
